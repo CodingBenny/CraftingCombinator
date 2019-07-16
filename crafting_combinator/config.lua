@@ -5,6 +5,8 @@ return {
 	SETTINGS_ENTITY_NAME = 'crafting_combinator:settings-entity',
 	REFRESH_RATE_CC_NAME = 'crafting_combinator:refresh-rate-cc',
 	REFRESH_RATE_RC_NAME = 'crafting_combinator:refresh-rate-rc',
+	USE_ICONS_NAME = 'crafting_combinator:use-icons',
+	SEPARATE_RECIPES_NAME = 'crafting-combinator:separate-recipes',
 	RC_PROXY_NAME = 'crafting_combinator:rc-proxy',
 	TIME_SIGNAL_NAME = 'crafting_combinator:recipe-time',
 	SPEED_SIGNAL_NAME = 'crafting_combinator:crafting-speed',
@@ -39,6 +41,12 @@ return {
 	
 	REFRESH_RATE_CC = 60,
 	REFRESH_RATE_RC = 60,
+	USE_ICONS = "recipe-product",
+	USE_ICONS_OPTIONS = {
+		"recipe-product",
+		"recipe-generated",
+	},
+	SEPARATE_RECIPES = false,	
 	
 	INSERTER_EMPTY_DELAY = 60,
 	

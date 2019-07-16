@@ -1,7 +1,7 @@
 local _M = {}
 
 
-function _M.get_recipe(entity, items_to_ignore, connector_id)
+function _M.get_recipe(entity, items_to_ignore, connector_id, strict)
 	items_to_ignore = items_to_ignore or {}
 	local signals
 	if connector_id ~= nil then signals = entity.get_merged_signals(connector_id)
@@ -10,14 +10,16 @@ function _M.get_recipe(entity, items_to_ignore, connector_id)
 	
 	local res = nil
 	local count = nil
+	local highest = nil
 	for _, signal in pairs(signals) do
 		local recipe = entity.force.recipes[signal.signal.name]
 		if recipe and recipe.enabled then
 			local c = signal.count - (items_to_ignore[recipe.name] or 0)
-			if count == nil or c > count then res = recipe; count = c; end
+			if count == nil or c > count then res = recipe; count = c; highest = signal; end
 		end
 	end
 	
+	if strict and highest.type ~= "virtual" then log("blocked");  return nil; end
 	return res, count
 end
 
@@ -28,16 +30,18 @@ function _M.get_highest_signal(signals)
 	
 	for _, signal in pairs(signals) do
 		local c = signal.count
-		if count == nil or c > count then res, count = signal.signal.name, c; end
+		if count == nil or c > count then res, count = signal, c; end
 	end
 	
 	return res, count or 0
 end
 
-function _M.get_recipes(signals, recipes)
+function _M.get_recipes(signals, recipes, strict)
 	if not signals then return {}, 0; end
 	local highest, count = _M.get_highest_signal(signals)
 	if not highest then return {}, 0; end
+	if strict and highest.type == "virtual" then return {}, 0; end
+	highest = highest.signal.name
 	
 	local res = {}
 	local item
@@ -62,10 +66,10 @@ function _M.get_recipes(signals, recipes)
 end
 
 
-function _M.get_signal(recipe)
+function _M.get_signal(recipe, force_virtual)
 	return {
 		name = recipe,
-		type = (game.item_prototypes[recipe] and 'item') or (game.fluid_prototypes[recipe] and 'fluid') or 'virtual'
+		type = (force_virtual and 'virtual') or (game.item_prototypes[recipe] and 'item') or (game.fluid_prototypes[recipe] and 'fluid') or 'virtual'
 	}
 end
 

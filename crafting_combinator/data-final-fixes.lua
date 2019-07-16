@@ -41,7 +41,7 @@ local function needs_signal(recipe)
 	return not (
 			is_hidden(recipe)
 			or is_ignored(name)
-			or is_result(recipe, name)
+			or (not settings.startup["crafting-combinator:separate-recipes"] and is_result(recipe, name))
 			or data.raw['virtual-signal'][name]
 		)
 end
@@ -53,6 +53,22 @@ local function try_get_icons(item)
 	if item.icon then return {{icon = item.icon}}; end
 	if item.icons then return item.icons; end
 	return nil
+end
+
+local function get_possible_ingredients(recipe)
+	local res = {}
+	local function _get_ingredients(tab)
+		if tab.ingredient then table.insert(res, tab.ingredient); end
+		if tab.ingredients then
+			for _, ingredient in pairs(tab.ingredients) do table.insert(res, get_result_name(ingredient)); end
+		end
+	end
+	
+	_get_ingredients(recipe)
+	if recipe.expensive then _get_ingredients(recipe.expensive); end
+	if recipe.normal then _get_ingredients(recipe.normal); end
+	
+	return res
 end
 
 local function get_possible_results(recipe)
@@ -71,18 +87,42 @@ local function get_possible_results(recipe)
 	return res
 end
 
+local function find_icons(item)
+	for _, type in pairs(item_types) do
+		local res = try_get_icons(data.raw[type][item])
+		if res then return res end
+	end
+end
+
 local function get_icons(recipe)
 	if recipe.icon then return {{icon = recipe.icon}}; end
 	if recipe.icons then return recipe.icons; end
 	
-	for _, type in pairs(item_types) do
-		local first_icons
-		for _, result in pairs(get_possible_results(recipe)) do
-			local icons = try_get_icons(data.raw[type][result])
-			if result == recipe.name and icons then return icons; end
-			first_icons = first_icons or icons
+	if settings.startup[config.USE_ICONS_NAME].value == "recipe-product" then
+		for _, type in pairs(item_types) do
+			local first_icons
+			for _, result in pairs(get_possible_results(recipe)) do
+				local icons = try_get_icons(data.raw[type][result])
+				if result == recipe.name and icons then return icons; end
+				first_icons = first_icons or icons
+			end
+			if first_icons then return first_icons; end
 		end
-		if first_icons then return first_icons; end
+	else
+		local icons = {{icon = '__core__/graphics/editor-speed-up-icon.png', icon_size = 64}}
+		local x = {-9,9}
+		for i, items in pairs({get_possible_ingredients(recipe), get_possible_results(recipe)}) do
+			local y = -3*(math.min(#items,4)-1)
+			for j, item in pairs(items) do
+				local item_icons = find_icons(item)
+				if item_icons then
+					icons = util.combine_icons(icons, item_icons, {scale = 0.4, shift = {x[i], y}})
+					y = y + 6
+				end
+				if j == 4 then break; end
+			end
+		end
+		return icons
 	end
 	
 	log("Icon not found for: "..recipe.name)

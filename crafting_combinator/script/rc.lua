@@ -113,12 +113,13 @@ function _M:find_recipe()
 	local index = 1
 	local recipes, count = recipe_selector.get_recipes(
 			self.entity.get_merged_signals(defines.circuit_connector_id.combinator_input),
-			self.entity.force.recipes)
+			self.entity.force.recipes,
+			settings.startup[config.SEPARATE_RECIPES_NAME].value)
 	count = self.settings.multiply_by_input and count or 1
 	for _, recipe in pairs(recipes) do
 		local recipe_count = self.settings.divide_by_output and math.ceil(count/recipe.count) or count
 		table.insert(params, {
-			signal = recipe_selector.get_signal(recipe.name),
+			signal = recipe_selector.get_signal(recipe.name, settings.startup[config.SEPARATE_RECIPES_NAME].value),
 			count = self.settings.differ_output and index or recipe_count,
 			index = index,
 		})
@@ -129,7 +130,7 @@ function _M:find_recipe()
 end
 
 function _M:find_ingredients_and_products(forced)
-	local recipe, input_count = recipe_selector.get_recipe(self.entity, nil, defines.circuit_connector_id.combinator_input)
+	local recipe, input_count = recipe_selector.get_recipe(self.entity, nil, defines.circuit_connector_id.combinator_input, settings.startup[config.SEPARATE_RECIPES_NAME].value)
 	
 	if self.recipe ~= recipe or forced or (self.settings.multiply_by_input and self.input_count ~= input_count) then
 		self.recipe = recipe
@@ -184,7 +185,7 @@ function _M:find_machines(forced)
 					local mac_res = self.entity.force.recipes[recipe]
 					if mac_res and not mac_res.hidden and mac_res.enabled then
 						table.insert(params, {
-							signal = recipe_selector.get_signal(item),
+							signal = {name=item, type='item'},
 							count = self.settings.multiply_by_input and input_count or
 								self.settings.differ_output and index or 1,
 							index = index,

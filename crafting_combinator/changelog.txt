@@ -2,6 +2,8 @@
 Version:
 Date:
   Features:
+    - Added option to seperate recipes and items strictly
+	- Added option to generate icons for recipes instead of using a product
   Bugfixes:
   Changes:
 ---------------------------------------------------------------------------------------------------
